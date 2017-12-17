@@ -5,14 +5,81 @@ service:
 plugins:
   - serverless-webpack
 
+custom:
+  name: parking-chair
+
+  awsIOTTopicSend: ${self:custom.name}-iot-topic-send-image
+  awsIOTTopicRecieve: ${self:custom.name}-iot-topic-recieve-image
+  
+  twilioNumber: ${file(./serverless.env.yml):TWILIO_NUMBER}
+  twilioAuthToken: ${file(./serverless.env.yml):TWILIO_AUTH_TOKEN}
+  twilioAccSID: ${file(./serverless.env.yml):TWILIO_ACC_SID}
+
+  imagesBucketName:  ${self:custom.name}-s3
+
+
 provider:
   name: aws
+  region: us-east-1
+
+  memorySize: 128
   runtime: nodejs6.10
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - 'iot:Publish'
+      Resource: "*"
+
 
 functions:
-  hello:
-    handler: handler.hello
+  receivedText:
+    handler: src/receivedText/handler.receivedText
     events:
       - http:
-          method: get
-          path: hello
+          method: post
+          path: receivedText
+          cors: true
+    environment:
+      awsIOTTopicSend: ${self:custom.awsIOTTopicSend}
+
+  sendText:
+    handler: src/sendText/handler.sendText
+    events:
+      - http:
+          method: post
+          path: sendText
+      - iot:
+          sql: "SELECT * FROM '${self:custom.awsIOTTopicRecieve}'"
+    environment:
+      twilioNumber: ${self:custom.twilioNumber}
+      twilioAuthToken: ${self:custom.twilioAuthToken}
+      twilioAccSID: ${self:custom.twilioAccSID}
+
+
+resources:
+  Resources:
+    ImagesS3Bucket:
+     Type: AWS::S3::Bucket
+     Properties:
+       BucketName: ${self:custom.imagesBucketName}
+       AccessControl: 'PublicRead'
+    ImagesS3BucketPolicy:
+      Type: AWS::S3::BucketPolicy
+      Properties:
+        Bucket:
+          Ref: ImagesS3Bucket
+        PolicyDocument:
+          Statement:
+            - Sid: PublicReadGetObject
+              Effect: Allow
+              Principal: "*"
+              Action:
+              - s3:GetObject
+              Resource:
+                Fn::Join: [
+                  "", [
+                    "arn:aws:s3:::",
+                    { "Ref": "ImagesS3Bucket" },
+                    "/*"
+                  ]
+                ]
