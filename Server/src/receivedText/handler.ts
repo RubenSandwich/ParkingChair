@@ -1,10 +1,20 @@
+import { fromCallback } from "promise-cb";
+import { IotData } from "aws-sdk";
+
+import { ICallback, IEventPayload, HTTPStatusCodes } from "../lambdaTypes";
+
 declare const process: {
   env: {
     awsIOTTopicSend: string;
+    awsIOTEndPoint: string;
   };
 };
 
-export const receivedText = (event, context, cb) => {
+const iotdata = new IotData({ endpoint: process.env.awsIOTEndPoint });
+const iotdataPublishPromise = (params): Promise<any> =>
+  fromCallback(cb => iotdata.publish(params, cb));
+
+export const receivedText = async (event, context, cb) => {
   const { awsIOTTopicSend } = process.env;
   const addMessage = `${awsIOTTopicSend}`;
   const response = {
@@ -15,5 +25,23 @@ export const receivedText = (event, context, cb) => {
     })
   };
 
-  cb(null, response);
+  try {
+    var params = {
+      topic: process.env.awsIOTTopicSend,
+      payload: event.body
+    };
+
+    await iotdataPublishPromise(params);
+
+    cb(null, {
+      statusCode: HTTPStatusCodes.OK
+    });
+  } catch (e) {
+    console.log(e);
+
+    cb(null, {
+      statusCode: HTTPStatusCodes.InternalServerError,
+      body: "Server Error. Check server error logs."
+    });
+  }
 };

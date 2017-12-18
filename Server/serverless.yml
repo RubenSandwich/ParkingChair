@@ -10,6 +10,7 @@ custom:
 
   awsIOTTopicSend: ${self:custom.name}-iot-topic-send-image
   awsIOTTopicRecieve: ${self:custom.name}-iot-topic-recieve-image
+  awsIOTEndPoint: ${file(./serverless.env.yml):AWS_IOT_ENDPOINT}
   
   twilioNumber: ${file(./serverless.env.yml):TWILIO_NUMBER}
   twilioAuthToken: ${file(./serverless.env.yml):TWILIO_AUTH_TOKEN}
@@ -41,6 +42,7 @@ functions:
           cors: true
     environment:
       awsIOTTopicSend: ${self:custom.awsIOTTopicSend}
+      awsIOTEndPoint: ${self:custom.awsIOTEndPoint}
 
   sendText:
     handler: src/sendText/handler.sendText
@@ -48,8 +50,7 @@ functions:
       - http:
           method: post
           path: sendText
-      - iot:
-          sql: "SELECT * FROM '${self:custom.awsIOTTopicRecieve}'"
+          cors: true
     environment:
       twilioNumber: ${self:custom.twilioNumber}
       twilioAuthToken: ${self:custom.twilioAuthToken}
