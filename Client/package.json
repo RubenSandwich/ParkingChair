@@ -5,13 +5,21 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "node_modules/.bin/tsc"
+    "build": "node_modules/.bin/tsc",
+    "run": "node ./dist/index.js",
+    "buildAndRun": "yarn run build; yarn run run;"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/dotenv": "^4.0.2",
     "@types/node": "^8.5.1",
+    "@types/node-fetch": "^1.6.7",
     "tslint": "^5.8.0",
     "typescript": "^2.6.2"
+  },
+  "dependencies": {
+    "dotenv": "^4.0.0",
+    "node-fetch": "^1.7.3"
   }
 }

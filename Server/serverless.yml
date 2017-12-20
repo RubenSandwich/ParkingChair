@@ -8,6 +8,8 @@ plugins:
 custom:
   name: parking-chair
 
+  apiKey: ${file(./serverless.env.yml):API_KEY}
+
   awsIOTTopicSend: ${self:custom.name}-iot-topic-send-image
   awsIOTTopicRecieve: ${self:custom.name}-iot-topic-recieve-image
   awsIOTEndPoint: ${file(./serverless.env.yml):AWS_IOT_ENDPOINT}
@@ -25,6 +27,9 @@ provider:
 
   memorySize: 128
   runtime: nodejs6.10
+  apiKeys:
+    - ${self:custom.apiKey}
+
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -51,6 +56,7 @@ functions:
           method: post
           path: sendText
           cors: true
+          private: true
     environment:
       twilioNumber: ${self:custom.twilioNumber}
       twilioAuthToken: ${self:custom.twilioAuthToken}
