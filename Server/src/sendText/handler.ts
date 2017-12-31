@@ -1,4 +1,5 @@
 import * as twilio from "twilio";
+import { S3 } from "aws-sdk";
 
 import { fromCallback } from "promise-cb";
 
@@ -9,6 +10,7 @@ declare const process: {
     twilioNumber: string;
     twilioAuthToken: string;
     twilioAccSID: string;
+    imagesBucketName: string;
   };
 };
 
@@ -18,31 +20,40 @@ const twilioClient = new twilio(twilioAccSID, twilioAuthToken);
 const sendTextPromise = (params): Promise<any> =>
   fromCallback(cb => twilioClient.messages.create(params, cb));
 
+const s3Bucket = new S3({ params: { Bucket: process.env.imagesBucketName } });
+const uploadToS3Promise = (params): Promise<any> =>
+  fromCallback(cb => s3Bucket.upload(params, cb));
+
 export const sendText = async (event, _, cb) => {
   const { twilioNumber } = process.env;
 
   try {
     const body = JSON.parse(event.body);
+    const { base64Image, fileName, sendTo } = body;
 
-    // TODO:
-    // 1. Upload sent base64 image to S3
-    // 2. Get URL of uploaded image
-    // 3. Include URL in sent message
+    const buf = new Buffer(base64Image, "base64");
+
+    const data = {
+      Key: fileName,
+      Body: buf,
+      ContentEncoding: "base64",
+      ContentType: "image/jpeg"
+    };
+
+    const s3Responce = await uploadToS3Promise(data);
 
     var params = {
-      body: "Hello from Node",
-      to: body.sendTo,
+      body: "",
+      mediaUrl: s3Responce.Location,
+      to: sendTo,
       from: twilioNumber
     };
 
     await sendTextPromise(params);
 
-    const response = {
-      statusCode: 200,
-      body: JSON.stringify(body)
-    };
-
-    cb(null, response);
+    cb(null, {
+      statusCode: HTTPStatusCodes.OK
+    });
   } catch (e) {
     console.log(e);
 

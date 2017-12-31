@@ -1,6 +1,10 @@
 import * as dotenv from "dotenv";
 dotenv.config();
 
+import { readFileSync } from "fs";
+//import { execSync } from "child_process";
+
+import * as uuidv1 from "uuid/v1";
 import fetch from "node-fetch";
 import * as awsIot from "aws-iot-device-sdk";
 
@@ -24,6 +28,11 @@ const {
   AWS_SECRET_KEY
 } = process.env;
 
+function base64_encode(file: string) {
+  var bitmap = readFileSync(file);
+  return new Buffer(bitmap).toString("base64");
+}
+
 const client = new awsIot.device({
   protocol: "wss",
   port: 443,
@@ -40,20 +49,24 @@ client.on("message", (_, payload) => {
   const message = JSON.parse(payload);
 
   // TODO:
-  // 1. Capture image
-  // 2. Send image as base64 string
+  // 2. Capture image async
+  const fileName = `${uuidv1()}.jpg`;
+
+  const body = {
+    sendTo: message.sendTo,
+    base64Image: base64_encode(fileName),
+    fileName
+  };
 
   fetch(API_URL, {
     method: "POST",
     headers: {
       "X-Api-Key": API_KEY
     },
-    body: JSON.stringify(message)
+    body: JSON.stringify(body)
   })
-    .then(res => res.json())
-    .then(json => console.log(json));
-});
-
-client.on("close", () => {
-  console.log("close");
+    .then(res => {
+      console.log(res.ok);
+    })
+    .catch(e => console.log(e));
 });
