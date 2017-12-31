@@ -19,6 +19,7 @@
   "license": "MIT",
   "dependencies": {
     "aws-sdk": "^2.171.0",
-    "promise-cb": "^0.1.4"
+    "promise-cb": "^0.1.4",
+    "twilio": "^3.11.0"
   }
 }

@@ -1,7 +1,9 @@
+import * as querystring from "querystring";
+
 import { fromCallback } from "promise-cb";
 import { IotData } from "aws-sdk";
 
-import { ICallback, IEventPayload, HTTPStatusCodes } from "../lambdaTypes";
+import { HTTPStatusCodes } from "../lambdaTypes";
 
 declare const process: {
   env: {
@@ -14,33 +16,34 @@ const iotdata = new IotData({ endpoint: process.env.awsIOTEndPoint });
 const iotdataPublishPromise = (params): Promise<any> =>
   fromCallback(cb => iotdata.publish(params, cb));
 
-export const receivedText = async (event, context, cb) => {
+export const receivedText = async (event, _, cb) => {
   const { awsIOTTopicSend } = process.env;
-  const addMessage = `${awsIOTTopicSend}`;
-  const response = {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: `receivedText executed successfully! ${addMessage}`,
-      input: event
-    })
-  };
+  const message = querystring.parse(event.body);
 
   try {
+    const payload = { sendTo: message.From };
+
     var params = {
-      topic: process.env.awsIOTTopicSend,
-      payload: event.body
+      topic: awsIOTTopicSend,
+      payload: JSON.stringify(payload)
     };
 
     await iotdataPublishPromise(params);
 
     cb(null, {
-      statusCode: HTTPStatusCodes.OK
+      statusCode: HTTPStatusCodes.OK,
+      headers: {
+        "Content-Type": "text/html"
+      }
     });
   } catch (e) {
     console.log(e);
 
     cb(null, {
       statusCode: HTTPStatusCodes.InternalServerError,
+      headers: {
+        "Content-Type": "text/html"
+      },
       body: "Server Error. Check server error logs."
     });
   }

@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/aws-iot-device-sdk": "^2.1.1",
     "@types/dotenv": "^4.0.2",
     "@types/node": "^8.5.1",
     "@types/node-fetch": "^1.6.7",
@@ -19,6 +20,7 @@
     "typescript": "^2.6.2"
   },
   "dependencies": {
+    "aws-iot-device-sdk": "^2.2.0",
     "dotenv": "^4.0.0",
     "node-fetch": "^1.7.3"
   }
