@@ -2,7 +2,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 import { readFileSync } from "fs";
-//import { execSync } from "child_process";
+import { execSync } from "child_process";
 
 import * as uuidv1 from "uuid/v1";
 import fetch from "node-fetch";
@@ -51,6 +51,8 @@ client.on("message", (_, payload) => {
   // TODO:
   // 2. Capture image async
   const fileName = `${uuidv1()}.jpg`;
+
+  execSync(`raspistill -w 640 -h 480 -sa -100 -rot 270 -o ${fileName}`);
 
   const body = {
     sendTo: message.sendTo,
